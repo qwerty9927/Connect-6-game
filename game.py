@@ -1,124 +1,221 @@
-#!/usr/bin/env python3
-import os
-from common import Point
-from logger import MoveLogger
+import tkinter as tk
+import numpy as np
 from rules import Referee
-from bot import Bot
+from logger import MoveLogger
+from common import Move
 from config import AIBot
+from mainBot import MainBot
+from player import Player
 
-# constants
-STONE_CHAR = ['.', 'O', 'X']
 STONE_NAME = ['', 'White (O)', 'Black (X)']
-CHAR_TO_X = {chr(ord('A') + i) : i for i in range(19)}
-X_TO_CHAR = {i: chr(ord('A')+i) for i in range(19)}
 
-# console helper methods
-def cls():
-    os.system('cls' if os.name == 'nt' else 'clear')
+class Game:
+  def __init__(self, size = 19) -> None:
+    self.bot_set = [None]
+    # self.board = [[0 for x in range(size)] for y in range(size)]
+    self.board = np.zeros(shape=(19, 19))
+    self.referee = Referee(self.board)
+    self.nth_move = 1
+    self.player = 2  # 1=white 2=black. black moves first
+    self.current_player_moved_count = 2  # at first time, black can only move once.
+    self.logger = MoveLogger()
+    self.selectAble = True
+    self.stores = []
+    self.currentIndex = -1
 
-def darktext(str):
-    return str if os.name == 'nt' else '\x1b[0;30m{}\x1b[0m'.format(str)
-
-
-def draw_board(board, player=0, nth_move=0):
-    cls()
-    print('Move : {}'.format(nth_move))
-    print('{} turn.'.format(STONE_NAME[player]))
-    print()
-    print('       A B C D E F G H I J K L M N O P Q R S ')
-    print('     +---------------------------------------+')
+    # Main screen
+    self.myScreen = tk.Tk()
+    self.myScreen.title('Connect 6 game')
+    self.myScreen.maxsize(900, 600)
+    self.myScreen.config(background="skyblue")
+    self.arrayPos = self.left(size)    
+    self.right()   
     
-    for y in range(19):
-        print('  {:>2d} |'.format(y+1), end='')  # line no.
-        for x in range(19):
-            stone = board[y][x]
-            if stone != 0: print(' ' + STONE_CHAR[board[y][x]], end='')
-            else: print(darktext(' '+X_TO_CHAR[x].lower()), end='')
-        print(' |')
+    # Toplevel
+    self.startTopLevelScreen()
 
-    print('     +---------------------------------------+')
-    print()
+    self.myScreen.mainloop()
+    
+  def start1vs1(self):
+    self.bot_set = [None, Player(1), Player(2)]
 
+  def startWithBot(self):
+    self.bot_set = [None, AIBot(1), Player(2)]
 
-class Player(Bot):
-    """ 플레이어도 봇으로 취급하지만, 사용자로부터 입력을 받음. """
+  def startGame(self, callback):
+    self.myScreen.deiconify()
+    self.startScreen.destroy()
+    callback()
 
-    def move(self, board, nth_move):
-        move = input('{} turn : '.format(STONE_NAME[self.player]))
-        return Point.from_name(move)
+  # Start top level screen
+  def startTopLevelScreen(self):
+    self.startScreen = tk.Toplevel(self.myScreen)
+    self.startScreen.title("Start Connect 6 game")
+    self.startScreen.geometry("200x200")
+    tk.Button(self.startScreen, text="Start 1 vs 1", width=120, command=lambda: self.startGame(self.start1vs1)).pack()
+    tk.Button(self.startScreen, text="Start vs bot", width=120, command=lambda: self.startGame(self.startWithBot)).pack()
+    tk.Button(self.startScreen, text="Load record", width=120).pack()
+    tk.Button(self.startScreen, text="Close", width=120, command=self.myScreen.destroy).pack()
 
+    self.myScreen.withdraw()
+    self.startScreen.protocol("WM_DELETE_WINDOW", self.myScreen.destroy)
 
-def exit_game(logger: MoveLogger, won_bot=None):
+  # Left
+  def left(self, size):
+    arrayPos = []
+    self.leftFrame = tk.Frame(self.myScreen, width=650, height= 600)
+    self.leftFrame.grid(row=0, column=0, padx=10, pady=5)
+    for i in range(size):
+      subArray = []
+      for j in range(size):
+        button = tk.Button(self.leftFrame, text=" ", width=2, height=1, bg="#EFB265", command=lambda i = i, j = j: self.selectPos(i, j))
+        button.grid(row=i, column=j)
+        subArray.append(button)
+      arrayPos.append(subArray)
+    return arrayPos
+
+  # Right
+  def right(self):
+    self.rightFrame = tk.Frame(self.myScreen, width= 200, height=600, background="green")
+    self.rightFrame.grid(row=0, column=1, padx=10, pady=5)
+
+    tk.Label(self.rightFrame, text="Message", font=50).grid(row=0, column=0, padx=5)
+
+    self.message = tk.Message(self.rightFrame, width=150, text="Hello world")
+    self.message.grid(row=1, column=0, padx=5, pady=10)
+
+    tk.Label(self.rightFrame, text="Tool bar", font=50).grid(row=2, column=0, padx=5, pady=5)
+    self.toolBar = tk.Frame(self.rightFrame, width=180, height= 200)
+    self.toolBar.grid(row=3, column=0, padx=5, pady=5)
+    tk.Button(self.toolBar, text="Undo", width=20, command=self.undo).pack()
+    tk.Button(self.toolBar, text="Redo", width=20, command=self.redo).pack()
+    tk.Button(self.toolBar, text="New game", width=20).pack()
+
+    tk.Button(self.toolBar, text="Close", command=self.myScreen.destroy)
+
+# Handle game
+  def exit_game(self, logger: MoveLogger, won_bot=None):
     if won_bot is not None:
-        logger.log_winner(won_bot.player)
-        print('{} ({}) won!!'.format(STONE_NAME[won_bot.player], won_bot.bot_kind))
+      self.message["text"] = f"Winner is {STONE_NAME[won_bot.player]}"
+      logger.log_winner(won_bot.player)
+      print('{} won!!'.format(STONE_NAME[won_bot.player]))
     else:
-        print('No one won.')
+      print('No one won.')
 
-    logger.save_to_file()
+    # logger.save_to_file()
 
+  def selectPos(self, row, column):
+    # Chon roi khong chon nua
+    if(self.referee.can_place(row, column) and self.selectAble):
+      self.arrayPos[row][column]["bg"] = "#000" if self.player == 2 else "#fff"
 
-def main(bots):
-    # to align index with player variable.
-    bot_set = [None] + bots
+      # x: column, y: row
+      x, y = self.bot_set[self.player].move(column, row)
+      print(f"Player {self.player}")
+      print(f"Column {x}, Row {y}")
+       
+      # place stone // Ghi log
+      self.board[y][x] = self.player
+      self.logger.log(x, y, self.player)
+      self.referee.update(x, y, self.player)
+      
+       # Store status
+      self.stores = self.stores[0:self.currentIndex + 1]
+      self.stores.append(Move(y, x, self.player, self.current_player_moved_count).__dict__)
+      self.currentIndex += 1
 
-    board = [[0 for x in range(19)] for y in range(19)]
-    referee = Referee(board)
-
-    nth_move = 1
-    player = 2  # 1=white 2=black. black moves first
-    player_moved_count = 1  # at first time, black can only move once.
-    logger = MoveLogger()
-
-    while True:
-        draw_board(board, player, nth_move)
-        
-        # input loop.
-        while True:
-            try:
-                x, y = bot_set[player].move(board, nth_move)
-                able_to_place, msg = referee.can_place(x, y)
-                if not able_to_place:
-                    print('{}. Try again in another place.'.format(msg))
-                    continue
-                break
-
-            except KeyboardInterrupt:
-                print('\n' + 'Bye...')
-                exit_game(logger)
-                return
-
-            except Exception as e:
-                raise e
-                print('Wrong input.')
-                continue
-
-        # place stone
-        board[y][x] = player
-        logger.log(x, y, player)
-        referee.update(x, y, player)
-
-        won_player = referee.determine()
-        if won_player is not None:
-            exit_game(logger, bot_set[won_player])
-            return
-
-        player_moved_count += 1
-        if player_moved_count == 2:
-            # Change turn : a player can move 2 times per turn.
-            nth_move += 1
-            player_moved_count = 0
-            player = 2 if player == 1 else 1
+      # Determine won
+      if self.isWin():
+        return
+     
+      # Reset status
+      if self.current_player_moved_count == 2:
+          # Change turn : a player can move 2 times per turn.
+          self.nth_move += 1
+          self.current_player_moved_count = 0
+          self.player = 2 if self.player == 1 else 1
+      self.current_player_moved_count += 1
 
 
-if __name__ == '__main__':
-    print('Welcome to TherneConnect6.')
-    print('Choose player slot. (1=Player 2=AI)')
+      self.stateGame(self.player)
 
-    black_choice = input(' Black (1 or 2) : ')
-    white_choice = input(' White (1 or 2) : ')
+      
+      if(isinstance(self.bot_set[self.player], MainBot)):
+        # print(f"Board {self.board}")
+        row, column = self.bot_set[self.player].main(self.board)
+        # print(f"Row: {row}, Column: {column}")
+        # print(f"Referee: {self.referee.board}")
+        self.selectPos(row, column)
 
-    whitebot = Player(1) if white_choice == '1' else AIBot(1)
-    blackbot = Player(2) if black_choice == '1' else AIBot(2)
+      # print("Game", self.stores)
 
-    main([whitebot, blackbot])
+    elif not self.referee.can_place(row, column) and self.selectAble:
+      self.message["text"] = "Try again in another place."
+
+  def undo(self):
+    if(self.currentIndex > 0):
+      last_y = self.stores[self.currentIndex]["row"]
+      last_x = self.stores[self.currentIndex]["column"]
+      current_y = self.stores[self.currentIndex - 1]["row"]
+      current_x = self.stores[self.currentIndex - 1]["column"]
+      player = self.stores[self.currentIndex]["player"]
+      current_player_moved_count = self.stores[self.currentIndex]["current_player_moved_count"]
+      self.board[last_y][last_x] = 0
+      self.referee.undo(last_x, last_y, current_x, current_y, 0)
+      self.current_player_moved_count = current_player_moved_count
+      self.player = player
+      self.stateGame(player)
+      self.undoState(last_y, last_x)
+      self.currentIndex -= 1
+
+    elif(self.currentIndex == 0):
+      last_y = self.stores[self.currentIndex]["row"]
+      last_x = self.stores[self.currentIndex]["column"]
+      player = self.stores[self.currentIndex]["player"]
+      current_player_moved_count = self.stores[self.currentIndex]["current_player_moved_count"]
+      self.board[last_y][last_x] = 0
+      self.referee.undo(last_x, last_y, 0, 0, 0)
+      self.current_player_moved_count = current_player_moved_count
+      self.player = player
+      self.stateGame(player)
+      self.undoState(last_y, last_x)
+      self.currentIndex = -1
+
+  def undoState(self, row, column):
+    self.arrayPos[row][column]["bg"] = "#EFB265"
+    if(self.won_player):
+      self.selectAble = True
+      self.won_player = None
+
+  def redo(self):
+    # print(f"Current {self.currentIndex} --- len {len(self.stores) - 1}")
+    if(self.currentIndex < len(self.stores) - 1):
+      self.currentIndex += 1
+      current_y = self.stores[self.currentIndex]["row"]
+      current_x = self.stores[self.currentIndex]["column"]
+      player = self.stores[self.currentIndex]["player"]
+      current_player_moved_count = self.stores[self.currentIndex]["current_player_moved_count"]
+      self.referee.redo(current_x, current_y, player)
+
+      self.board[current_y][current_x] = player
+      self.current_player_moved_count = current_player_moved_count
+      self.player = player
+      self.stateGame(player)
+      self.redoState(current_y, current_x)
+      self.isWin()
+
+  def redoState(self, row, column):
+    self.arrayPos[row][column]["bg"] = "#000" if self.player == 2 else "#fff"
+
+  def stateGame(self, player):
+    self.message["text"] = f"{STONE_NAME[player]} do next step."
+
+  def isWin(self):
+    self.won_player = self.referee.determine()
+    if self.won_player is not None:
+        self.won_player = int(self.won_player)
+        self.exit_game(self.logger, self.bot_set[self.won_player])
+        self.selectAble = False
+        return True
+    return False
+

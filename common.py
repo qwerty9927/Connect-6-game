@@ -42,3 +42,9 @@ class Debugger:
         if self.enable_log:
             input('[Press any key to resume]')
 
+class Move:
+  def __init__(self, row, column, player, current_player_moved_count) -> None:
+    self.row = row
+    self.column = column
+    self.player = player
+    self.current_player_moved_count = current_player_moved_count

@@ -1,0 +1,18 @@
+untried_actions: Trả về danh sách các nước có thể đi của trạng thái đó
+q: Số lần thắng - số lần thua của node được chọn
+n: Số lần node đó được viến thăm
+
+best_child: Chọn ra node đi tốt nhất
+rollout_policy: Chọn random node đi tiếp theo cho hàm rollout
+rollout: Toàn bộ trò chơi được mô phỏng đến khi có kết quả của trò chơi
+tree_policy: Chọn ra node để thực hiện ảo hóa trên đó
+backpropagate: Lan truyền ngược toàn bộ lên
+best_action: Thực hiện mở rộng, ảo hóa, lan truyền ngược
+
+is_terminal_node: Có phải là node cuối cùng chưa
+is_fully_expanded: Đã được mở rộng hết chưa
+
+get_legal_actions: Trả về list các nước đi tiếp theo của trạng thái hiện tại
+is_game_over: có thua không
+game_result: kết quả của trò chơi
+move: nước đi 

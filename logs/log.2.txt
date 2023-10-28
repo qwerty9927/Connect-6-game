@@ -1,0 +1,12 @@
+("Move",2,9,4) # Black at J5 (9,4)
+("Move",1,10,4) # White at K5 (10,4)
+("Move",1,10,5) # White at K6 (10,5)
+("Move",2,9,5) # Black at J6 (9,5)
+("Move",2,9,6) # Black at J7 (9,6)
+("Move",2,9,7) # Black at J8 (9,7)
+("Move",1,10,6) # White at K7 (10,6)
+("Move",1,10,7) # White at K8 (10,7)
+("Move",2,9,8) # Black at J9 (9,8)
+("Move",2,9,9) # Black at J10 (9,9)
+("Res", 2) # Black won
+("Res", 2) # Black won

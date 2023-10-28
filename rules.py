@@ -3,15 +3,15 @@ from common import Point, Debugger, repr_direction
 debug = Debugger(enable_log=False)
 
 # 8방향에 대한 함수들
-DIRECTIONS = [
-    lambda x, y: (x+1, y),
-    lambda x, y: (x+1, y+1),
-    lambda x, y: (x+1, y-1),
-    lambda x, y: (x-1, y),
-    lambda x, y: (x-1, y+1),
-    lambda x, y: (x-1, y-1),
-    lambda x, y: (x, y-1),
-    lambda x, y: (x, y+1),
+DIRECTIONS = [ 
+    lambda x, y: (x+1, y), # dọc dưới #
+    lambda x, y: (x+1, y+1), # chéo phải dưới #
+    lambda x, y: (x+1, y-1), # chéo trái dưới
+    lambda x, y: (x-1, y), # dọc trên
+    lambda x, y: (x-1, y+1), # chéo phải trên
+    lambda x, y: (x-1, y-1), # chéo trái trên
+    lambda x, y: (x, y-1), # ngang trái
+    lambda x, y: (x, y+1), # ngang phải #
 ]
 
 
@@ -35,8 +35,10 @@ class Referee:
     def update(self, x, y, player):
         self.board[y][x] = player
         self.last_move = (x, y)
+        # print("Rule", self.board)
 
-    def determine(self) -> int:
+
+    def determine(self):
         """ Determine who won.
         :return: player number who won. None if there's no winner (game isn't finished).
         """
@@ -45,12 +47,12 @@ class Referee:
 
         # check 8 directions and start backtracking.
         for dir_func in DIRECTIONS:
-            nx, ny = dir_func(x, y)
-            if is_outta_range(nx, ny): continue
+            nx, ny = dir_func(x, y) # xác định nó có thuộc điểm góc hay không
+            if is_outta_range(nx, ny): continue # bỏ qua điểm góc
 
-            if board[ny][nx] == board[y][x]:
-                debug.log('Direction : ' + repr_direction(dir_func))
-                debug.log('Start at {}'.format(Point(x, y)))
+            if board[ny][nx] == board[y][x]: # cùng một người đánh
+                # debug.log('Direction : ' + repr_direction(dir_func))
+                # debug.log('Start at {}'.format(Point(x, y)))
 
                 # to check properly, go to the end of direction
                 while board[ny][nx] == board[y][x]:
@@ -60,39 +62,49 @@ class Referee:
                 reverse_dir_func = reverse_of(dir_func)
                 nx, ny = reverse_dir_func(nx, ny)  # one step back.
 
-                debug.log('End of direction : {}'.format(Point(nx, ny)))
+                # debug.log('End of direction : {}'.format(Point(nx, ny)))
 
                 is_end = self._track(nx, ny, reverse_dir_func)
                 if is_end:
                     # returns player who won.
                     return board[ny][nx]
 
-                debug.stop()
-
+                # debug.stop()
 
     def _track(self, start_x, start_y, dir_func):
         x, y = start_x, start_y
         original_player = self.board[y][x]
-        debug.log('Track started at {}'.format(Point(x, y)))
+        # debug.log('Track started at {}'.format(Point(x, y)))
 
-        step = 1
+        step = 1 # điểm cuối cùng luôn được tính
         while True:
             x, y = dir_func(x, y)
-            if is_outta_range(x, y) or self.board[y][x] != original_player:
+            if is_outta_range(x, y) or self.board[y][x] != original_player: # đụng góc hoặc khác người chơi
                 if step == 6: return True
-                debug.log('Track finished at step {}'.format(step))
+                # debug.log('Track finished at step {}'.format(step))
                 return False
             step += 1
 
-        if step > 6:
-            debug.log('Track success, but too many steps (step={})'.format(step))
+        # if step > 6:
+        #     debug.log('Track success, but too many steps (step={})'.format(step))
+        #     return False
+
+        # return True
+
+
+    def can_place(self, row, column):
+        if self.board[row][column] != 0:
             return False
 
         return True
 
+    def undo(self, last_x, last_y, current_x, current_y, player):
+        self.board[last_y][last_x] = player
+        self.last_move = (current_x, current_y)
+        print("Rule", self.board)
 
-    def can_place(self, x, y):
-        if self.board[y][x] != 0:
-            return False, 'Duplicated move'
+    def redo(self, current_x, current_y, player):
+        self.board[current_y][current_x] = player
+        self.last_move = (current_x, current_y)
+        print("Rule", self.board)
 
-        return True, 'Ok'

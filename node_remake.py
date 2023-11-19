@@ -25,8 +25,6 @@ class Node:
         rule = Referee(self.board)
         if rule.determine() is not None:
             return True
-        if list(self.board.flatten()).count(0) == 0:
-            return True
         return False
         # # check rows
         # for y in range(6):
@@ -71,49 +69,38 @@ class Node:
         # node already expanded
         if self.expanded:
             return
-        
-        for i in range(self.sizeBoard):
-            for j in range(self.sizeBoard):
-                if self.board[i, j] == 0:
-                    tmp = self.board.copy()
-                    if self.turn == 1:
-                        tmp[i, j] = 2
-                        self.children.append(Node(self, tmp, 1))
-                    else:
-                        tmp[i, j] = 1
-                        self.children.append(Node(self, tmp, 2))
         # get board of every child
-        # child_board = list()
-        # for child in self.children:
-        #     child_board.append(child.board)
-        # # find new child
-        # for i in range(self.sizeBoard):
-        #         for j in range(self.sizeBoard):
-        #             if self.board[i, j] == 0:
-        #                 tmp = self.board.copy()
-        #                 if self.turn == 1:
-        #                     tmp[i, j] = 2
-        #                     if child_board:
-        #                         if not self.compare_children(tmp, child_board):
-        #                             self.children.append(Node(self, tmp, 1))
-        #                             return
-        #                         else:
-        #                             break
-        #                     else:
-        #                         self.children.append(Node(self, tmp, 1))
-        #                         return
-        #                 else:
-        #                     tmp[i, j] = 1
-        #                     if child_board:
-        #                         if not self.compare_children(tmp, child_board):
-        #                             self.children.append(Node(self, tmp, 2))
-        #                             return
-        #                         else:
-        #                             break
-        #                     else:
-        #                         self.children.append(Node(self, tmp, 2))
-        #                         return
-        print(f"Children {self.children}")
+        child_board = list()
+        for child in self.children:
+            child_board.append(child.board)
+        # find new child
+        for i in range(self.sizeBoard):
+            if self.board[self.sizeBoard - 1, i] == 0:
+                for j in range(self.sizeBoard):
+                    if self.board[j, i] == 0:
+                        tmp = self.board.copy()
+                        if self.turn == 1:
+                            tmp[j, i] = 2
+                            if child_board:
+                                if not self.compare_children(tmp, child_board):
+                                    self.children.append(Node(self, tmp, 1))
+                                    return
+                                else:
+                                    break
+                            else:
+                                self.children.append(Node(self, tmp, 1))
+                                return
+                        else:
+                            tmp[j, i] = 1
+                            if child_board:
+                                if not self.compare_children(tmp, child_board):
+                                    self.children.append(Node(self, tmp, 2))
+                                    return
+                                else:
+                                    break
+                            else:
+                                self.children.append(Node(self, tmp, 2))
+                                return
         # no more children
         self.expanded = True
         return

@@ -40,7 +40,7 @@ class Game:
     self.bot_set = [None, Player(1), Player(2)]
 
   def startWithBot(self):
-    self.bot_set = [None, AIBot(1), Player(2)]
+    self.bot_set = [None, MainBot(1, self.board), Player(2)]
 
   def startGame(self, callback):
     self.myScreen.deiconify()
@@ -141,10 +141,7 @@ class Game:
 
       
       if(isinstance(self.bot_set[self.player], MainBot)):
-        # print(f"Board {self.board}")
-        row, column = self.bot_set[self.player].main(self.board)
-        # print(f"Row: {row}, Column: {column}")
-        # print(f"Referee: {self.referee.board}")
+        row, column = self.bot_set[self.player].main()
         self.selectPos(row, column)
 
       # print("Game", self.stores)

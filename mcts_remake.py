@@ -11,17 +11,14 @@ class MCTS:
         self.symbol = symbol
         self.t = t
         self.sizeBoard = sizeBoard
-        self.uct = 0
 
     # Main function for MCTS move computation
     def compute_move(self, root):
         time0 = time.time()
         playout = 0
         while(time.time() - time0) < self.t:
-        # while playout != 3:
             # selection and expansion
             leaf = self.select(root) # có vấn đề
-            # print(leaf)
             # simulation
             simulation_result = self.rollout(leaf)
             # backpropagation
@@ -30,13 +27,13 @@ class MCTS:
         # from next best state get move coordinates
         print("Playout: ", playout)
         selected = self.best_child(root)
-        print(f"Best node: {selected}")
-        print(f"Best node board: {selected.board}")
-        for j in range(self.sizeBoard):
-            for i in range(self.sizeBoard):
-                # print(f"Selection {selected.board[j][i]}, Root {root.board[j][i]}, isMatch {selected.board[j][i] != root.board[j][i]}")
-                if selected.board[j][i] != root.board[j][i]:
-                    return (j, i)
+
+        print(f"Best node: {selected.board}")
+        # for j in range(self.sizeBoard):
+        #     for i in range(self.sizeBoard):
+        #         # print(f"Selection {selected.board[j][i]}, Root {root.board[j][i]}, isMatch {selected.board[j][i] != root.board[j][i]}")
+        #         if selected.board[j][i] != root.board[j][i]:
+        #             return (j, i)
 
     # Node traversal
     def select(self, node):
@@ -56,24 +53,24 @@ class MCTS:
         else:
             # expand node and return it for rollout
             node.add_child()
-            print(len(node.children), node.children)
             if node.children:
                 return self.pick_unvisited(node.children)
-                # print(self.pick_unvisited(node.children))
-                # pick = self.pick_unvisited(node.children)
-                # if pick:
-                #     return pick
-                # return node
             else:
                 return node
-
             
+    
     # Check if node is a leaf
     def fully_expanded(self, node):
-        for child in node.children:
-            if child.N != 0:
-                return True
-        return False
+        visited = True
+        # max number of children a node can have
+        if list(node.board[self.sizeBoard - 1]).count(0) == len(node.children):
+            # check if every node has been visited
+            for child in node.children:
+                if child.N == 0:
+                    visited = False
+            return visited
+        else:
+            return False
 
     # Return node with best uct value
     def select_uct(self, node):
@@ -128,15 +125,16 @@ class MCTS:
     def get_moves(self, board, turn):
         moves = list()
         for i in range(self.sizeBoard):
-            for j in range(self.sizeBoard):
-                if board[i, j] == 0:
-                    tmp = board.copy()
-                    if turn == 1:
-                        tmp[i, j] = 2
-                    else:
-                        tmp[i, j] = 1
-                    moves.append(tmp)
-                    break
+            if board[self.sizeBoard - 1, i] == 0:
+                for j in range(self.sizeBoard):
+                    if board[j, i] == 0:
+                        tmp = board.copy()
+                        if turn == 1:
+                            tmp[j, i] = 2
+                        else:
+                            tmp[j, i] = 1
+                        moves.append(tmp)
+                        break
         return moves
 
     # Get result score from board
@@ -213,5 +211,4 @@ class MCTS:
             if child.N > max_visit:
                 max_visit = child.N
                 best_node = child
-        print(f"N: {max_visit}")
         return best_node

@@ -36,24 +36,19 @@ from common import Point
 
 # test
 class MainBot():
-  def __init__(self, player):
-    self.monteCarlo = MCTS(symbol=1, t=5)
+  def __init__(self, player, board):
     self.player = player
+    self.monteCarlo = MCTS(symbol=1, t=5)
+    self.root = Node(parent=None, board=board, turn=self.monteCarlo.symbol)
 
   def move(self, row, column):
     return Point(row, column)
-
-
 
   def createGameBoard(self):
     # board = [[0 for i in range(6)] for j in range(7)]
     board = np.zeros(shape=(19, 19))
     return board
         
-  def main(self, board):
-    root = Node(parent=None, board=board, turn=self.monteCarlo.symbol)
-    move = self.monteCarlo.compute_move(root)
-    # print(f"Row {move[0]}, Column {move[1]}")
-    # board[move[0], move[1]] = 1
-    # print(f"Board {board}")
+  def main(self):
+    move = self.monteCarlo.compute_move(self.root)
     return move

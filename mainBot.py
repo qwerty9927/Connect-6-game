@@ -38,8 +38,8 @@ from common import Point
 class MainBot():
   def __init__(self, player, board):
     self.player = player
+    self.board = board
     self.monteCarlo = MCTS(symbol=1, t=5)
-    self.root = Node(parent=None, board=board, turn=self.monteCarlo.symbol)
 
   def move(self, row, column):
     return Point(row, column)
@@ -50,5 +50,6 @@ class MainBot():
     return board
         
   def main(self):
-    move = self.monteCarlo.compute_move(self.root)
+    root = Node(parent=None, board=self.board, turn=self.monteCarlo.symbol)
+    move = self.monteCarlo.compute_move(root)
     return move

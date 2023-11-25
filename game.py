@@ -13,8 +13,8 @@ class Game:
   def __init__(self, size = 19) -> None:
     self.bot_set = [None]
     # self.board = [[0 for x in range(size)] for y in range(size)]
-    self.board = np.zeros(shape=(19, 19))
-    self.referee = Referee(self.board)
+    self.board = np.zeros(shape=(size, size), dtype=int)
+    self.referee = Referee(self.board, size)
     self.nth_move = 1
     self.player = 2  # 1=white 2=black. black moves first
     self.current_player_moved_count = 2  # at first time, black can only move once.
@@ -141,8 +141,10 @@ class Game:
 
       
       if(isinstance(self.bot_set[self.player], MainBot)):
-        row, column = self.bot_set[self.player].main()
-        self.selectPos(row, column)
+        if self.current_player_moved_count == 1:
+          result = self.bot_set[self.player].main()
+          for row, column in result:
+            self.selectPos(row, column)
 
       # print("Game", self.stores)
 
@@ -208,7 +210,8 @@ class Game:
     self.message["text"] = f"{STONE_NAME[player]} do next step."
 
   def isWin(self):
-    self.won_player = self.referee.determine()
+    # self.won_player = self.referee.determine()
+    self.won_player = self.referee.winner(self.player)
     if self.won_player is not None:
         self.won_player = int(self.won_player)
         self.exit_game(self.logger, self.bot_set[self.won_player])

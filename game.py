@@ -3,7 +3,6 @@ import numpy as np
 from rules import Referee
 from logger import MoveLogger
 from common import Move
-from config import AIBot
 from mainBot import MainBot
 from player import Player
 
@@ -40,7 +39,7 @@ class Game:
     self.bot_set = [None, Player(1), Player(2)]
 
   def startWithBot(self):
-    self.bot_set = [None, MainBot(1, self.board), Player(2)]
+    self.bot_set = [None, MainBot(1), Player(2)]
 
   def startGame(self, callback):
     self.myScreen.deiconify()
@@ -54,7 +53,7 @@ class Game:
     self.startScreen.geometry("200x200")
     tk.Button(self.startScreen, text="Start 1 vs 1", width=120, command=lambda: self.startGame(self.start1vs1)).pack()
     tk.Button(self.startScreen, text="Start vs bot", width=120, command=lambda: self.startGame(self.startWithBot)).pack()
-    tk.Button(self.startScreen, text="Load record", width=120).pack()
+    # tk.Button(self.startScreen, text="Load record", width=120).pack()
     tk.Button(self.startScreen, text="Close", width=120, command=self.myScreen.destroy).pack()
 
     self.myScreen.withdraw()
@@ -89,7 +88,7 @@ class Game:
     self.toolBar.grid(row=3, column=0, padx=5, pady=5)
     tk.Button(self.toolBar, text="Undo", width=20, command=self.undo).pack()
     tk.Button(self.toolBar, text="Redo", width=20, command=self.redo).pack()
-    tk.Button(self.toolBar, text="New game", width=20).pack()
+    # tk.Button(self.toolBar, text="New game", width=20).pack()
 
     tk.Button(self.toolBar, text="Close", command=self.myScreen.destroy)
 
@@ -136,15 +135,12 @@ class Game:
           self.player = 2 if self.player == 1 else 1
       self.current_player_moved_count += 1
 
-
       self.stateGame(self.player)
-
-      
+      # print(self.board)
       if(isinstance(self.bot_set[self.player], MainBot)):
-        if self.current_player_moved_count == 1:
-          result = self.bot_set[self.player].main()
-          for row, column in result:
-            self.selectPos(row, column)
+        row, column = self.bot_set[self.player].main(self.board.copy(), 2)
+        self.selectPos(row, column)
+
 
       # print("Game", self.stores)
 
